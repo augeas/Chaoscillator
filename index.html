@@ -174,6 +174,18 @@
 					this.rightModRange = Math.floor(val * 500);
 				}
 
+				this.stopLeftModulation = function() {
+					this.leftModOsc.disconnect();
+					this.leftModGain.disconnect();
+					this.leftModulation = false;
+				}	
+
+				this.stopRightModulation = function() {
+					this.rightModOsc.disconnect();
+					this.rightModGain.disconnect();
+					this.rightModulation = false;
+				}
+
 				this.setVol = function() {
 					var val = $("#volSlide").slider("value") / 100.0;
 					this.maxGain = val * 8;
@@ -188,12 +200,14 @@
 				
 				this.setLeftChannel = function() {
 					this.mixer.disconnect();
+					this.rightOsc.disconnect();
 					this.leftOsc.connect(this.monoGain);
 					this.monoGain.connect(this.context.destination);
 				}
 				
 				this.setRightChannel = function() {
 					this.mixer.disconnect();
+					this.leftOsc.disconnect();
 					this.rightOsc.connect(this.monoGain);
 					this.monoGain.connect(this.context.destination);
 				}				
@@ -217,9 +231,22 @@
 				
 					switch(whichVar) {
 						case 'lfv': this.lfvar = value; break;
-						case 'lmv': this.lmvar = value; break;
+						case 'lmv': this.lmvar = value;
+						if (!this.leftModulation) {
+							this.leftModOsc.connect(this.leftModGain);
+							this.leftModGain.connect(this.leftOsc.frequency);
+							this.leftModulation = true;
+						}						
+						break;
 						case 'rfv': this.rfvar = value; break;
-						case 'rmv': this.rmvar = value; break;
+						case 'rmv': this.rmvar = value;
+						if (!this.rightModulation) {
+							this.rightModOsc.connect(this.rightModGain);
+							this.rightModGain.connect(this.rightOsc.frequency);
+							this.rightModulation = true;
+						}	
+						
+						break;
 						case 'balancevar': this.balancevar = value; this.dynamicbalance=true; break;
 						case 'nobalance': this.dynamicbalance = false;
 						this.leftGain.gain.value = this.maxGain * 0.5;
@@ -230,6 +257,9 @@
 					this.setScales();
 					
 				}	
+
+				this.leftModulation = true;
+				this.rightModulation = true;
 				
 				this.leftFreqRange = 1000;
 				this.leftModRange = 50;
@@ -261,6 +291,8 @@
 				this.dt = 0.01;
 				
 				this.maxGain = 2.0;
+				
+
 				
 				this.leftModGain.gain.value = 20.0;
 				this.leftOsc.type = 0;
@@ -383,6 +415,7 @@
 			
 			$("#leftModVar").buttonset();
 
+			$("#lm0").click(function() {ltrace.stopLeftModulation();});
 			$("#lmx").click(function() {ltrace.setVar('lmv','x');});
 			$("#lmy").click(function() {ltrace.setVar('lmv','y');});
 			$("#lmz").click(function() {ltrace.setVar('lmv','z');});			
@@ -398,6 +431,7 @@
 		
 			$("#rightModVar").buttonset();
 
+			$("#rm0").click(function() {ltrace.stopRightModulation();});
 			$("#rmx").click(function() {ltrace.setVar('rmv','x');});
 			$("#rmy").click(function() {ltrace.setVar('rmv','y');});
 			$("#rmz").click(function() {ltrace.setVar('rmv','z');});
@@ -493,11 +527,12 @@
 			
 				
 				<div style="position:absolute; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">	
-					<div id="leftModRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+					<div id="leftModRangeSlide" style="position:absolute; left:5; top:8; width:120px; text-align:center;">
 						<span style="vertical-align:middle; font-size:small;">L mod</span>
 					</div>
 
 					<div id="leftModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="leftm0" name="leftm"><label id='lm0' style="font-size:small;" for="leftm0">0</label>
 						<input type="radio" id="leftmx" name="leftm"><label id='lmx' style="font-size:small;" for="leftmx">x</label>
 						<input type="radio" id="leftmy" name="leftm"><label id='lmy' style="font-size:small;" for="leftmy">y</label>
 						<input type="radio" id="leftmz" name="leftm" checked="checked"><label id='lmz' style="font-size:small;" for="leftmz">z</label>
@@ -520,11 +555,12 @@
 				
 
 				<div style="position:absolute; left: 300px; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">
-					<div id="rightModRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+					<div id="rightModRangeSlide" style="position:absolute; left:5; top:8; width:120px; text-align:center;">
 						<span style="vertical-align:middle; font-size:small;">R mod</span>
 					</div>
 				
 					<div id="rightModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="rightm0" name="rightm"><label id='rm0' style="font-size:small;" for="rightm0">0</label>
 						<input type="radio" id="rightmx" name="rightm"><label id='rmx' style="font-size:small;" for="rightmx">x</label>
 						<input type="radio" id="rightmy" name="rightm" checked="checked"><label id='rmy' style="font-size:small;" for="rightmy">y</label>
 						<input type="radio" id="rightmz" name="rightm" ><label id='rmz' style="font-size:small;" for="rightmz">z</label>
