@@ -1,0 +1,543 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
+		
+		<style>
+
+
+			
+
+		
+		</style>
+		
+		
+		
+		<script src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+		<script src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+		<script>
+			function lorentz(sigma,rho,beta) {
+				this.sigma = sigma;
+				this.rho = rho;
+				this.beta = beta;
+				this.x = 0.01;
+				this.y = 0.01;
+				this.z = 0.01;
+				this.dtmax = 0.015;
+
+				this.ranges = { 'x':{'min':-20.0, 'max':25.0}, 'y':{'min':-40, 'max':40}, 'z':{'min':0, 'max':60} };
+
+				this.set = function(x,y,z) { this.x = x; this.y = y; this.z = z; }
+				
+				this.dx = function(x) { return this.sigma * (this.y - x); }
+				this.dy = function(y) { return this.x * (this.rho - this.z) - y; }
+				this.dz = function(z) { return this.x * this.y - this.beta * z; }
+
+				this.chaos = function(perc) {this.rho = 13.0 + (perc * 15.0) / 100.0;}	
+
+			}
+			
+			function rk4(attract,dt) {
+				
+				
+				function doRK(v,f) {
+					
+					var k1 = dt * attract[f](v);
+					var k2 = dt * attract[f](v + k1/2.0);
+					var k3 = dt * attract[f](v + k2/2.0);
+					var k4 = dt * attract[f](v + k3);
+								
+					return v + (0.5 * k1 + k2 + k3 + 0.5 * k4) / 3.0;
+				}	
+					
+				var x = doRK(attract.x,'dx');
+				var y = doRK(attract.y,'dy');
+				var z = doRK(attract.z,'dz');
+				
+				attract.set(x, y, z);
+				
+				return attract;
+			}	
+			
+			function trace(target,attract) {
+				
+				this.setPlane = function(xplane,yplane) {
+					this.xvar = xplane;
+					this.yvar = yplane;
+					var xrange = this.attractor.ranges[xplane];
+					var yrange = this.attractor.ranges[yplane];
+					this.xscale = this.width / (xrange.max - xrange.min);
+					this.yscale = this.height / (yrange.max - yrange.min);
+					this.xmin = xrange.min;
+					this.ymin = yrange.min;
+					
+					this.xnorm = xrange.max - xrange.min;
+					this.ynorm = yrange.max - yrange.min;
+				}	
+				
+				this.setScales = function() {
+					var lfrange = this.attractor.ranges[this.lfvar];
+					this.lfmin = lfrange.min;
+					this.lfnorm = lfrange.max - lfrange.min;
+
+					var rfrange = this.attractor.ranges[this.rfvar];
+					this.rfmin = rfrange.min;
+					this.rfnorm = rfrange.max - rfrange.min;
+				
+					var lmrange = this.attractor.ranges[this.lmvar];
+					this.lmmin = lmrange.min;
+					this.lmnorm = lmrange.max - lmrange.min;
+					
+					var rmrange = this.attractor.ranges[this.rmvar];
+					this.rmmin = rmrange.min;
+					this.rmnorm = rmrange.max - rmrange.min;
+					
+					var balrange = this.attractor.ranges[this.balancevar];
+					this.balmin = balrange.min;
+					this.balnorm = balrange.max - balrange.min;
+				}	
+				
+				this.getPoint = function() {
+				
+					this.attractor = rk4(this.attractor,this.dt);
+					
+					var x = Math.round((this.attractor[this.xvar] - this.xmin) * this.xscale);
+					var y = this.height - Math.round((this.attractor[this.yvar] - this.ymin) * this.yscale);
+			
+					return(x+" "+y);
+				
+				}	
+				
+				this.tick = function() {
+				
+					this.points = this.points.replace(/[\d]+\s[\d]+\s/,"");
+					this.points += " "+this.getPoint();
+					this.pline.setAttribute("points",this.points);
+					
+					this.leftOsc.frequency.value = this.leftFreqRange * (this.attractor[this.lfvar] - this.lfmin) / this.lfnorm;
+					this.leftModOsc.frequency.value = this.leftModRange * (this.attractor[this.lmvar] - this.lmmin) / this.lmnorm;
+					
+					this.rightOsc.frequency.value = this.rightFreqRange * (this.attractor[this.rfvar] - this.rfmin) / this.rfnorm;
+					this.rightModOsc.frequency.value = this.rightModRange * (this.attractor[this.rmvar] - this.rmmin) / this.rmnorm;					
+					
+					if (this.dynamicbalance) {
+						this.leftGain.gain.value = this.maxGain * (1 - (this.attractor[this.balancevar] - this.balmin)/this.balnorm);		
+						this.rightGain.gain.value = this.maxGain * (this.attractor[this.balancevar] - this.balmin)/this.balnorm;
+					}
+				}	
+			
+				initPoints = function() {
+					this.points = this.getPoint();
+				
+					for (var i=0;i<1024;i++) {
+						this.points += " "+this.getPoint();
+					}						
+				}	
+			
+				this.initPoints = initPoints;
+			
+				this.newPlane = function(x,y) {
+				
+					this.setPlane(x,y);
+					this.initPoints();
+					
+				}
+				
+				this.setChaos = function() {
+					var val = $("#chaosSlide").slider("value");
+					this.attractor.chaos(val);
+				}
+
+				this.setSpeed = function() {
+					var val = $("#timeSlide").slider("value");
+					this.dt = 0.00001 + (this.attractor.dtmax * val) / 100.0;
+				}
+				
+	
+
+				this.setLeftFreqRange = function() {
+					var val = $("#leftFreqRangeSlide").slider("value") / 100.0;
+					this.leftFreqRange = Math.floor(val * 1000);	
+				}
+
+				this.setLeftModRange = function() {
+					var val = $("#leftModRangeSlide").slider("value") / 100.0;
+					this.leftModRange = Math.floor(val * 500);
+				}
+				
+				this.setRightFreqRange = function() {
+					var val = $("#rightFreqRangeSlide").slider("value") / 100.0;
+					this.rightFreqRange = Math.floor(val * 1000);	
+				}
+
+				this.setRightModRange = function() {
+					var val = $("#rightModRangeSlide").slider("value") / 100.0;
+					this.rightModRange = Math.floor(val * 500);
+				}
+
+				this.setVol = function() {
+					var val = $("#volSlide").slider("value") / 100.0;
+					this.maxGain = val * 8;
+					this.monoGain.gain.value = this.maxGain;
+					
+					if (!this.dynamicbalance) {
+						this.leftGain.gain.value = 0.5 * this.maxGain;
+						this.rightGain.gain.value = 0.5 * this.maxGain;	
+					}	
+					
+				}
+				
+				this.setLeftChannel = function() {
+					this.mixer.disconnect();
+					this.leftOsc.connect(this.monoGain);
+					this.monoGain.connect(this.context.destination);
+				}
+				
+				this.setRightChannel = function() {
+					this.mixer.disconnect();
+					this.rightOsc.connect(this.monoGain);
+					this.monoGain.connect(this.context.destination);
+				}				
+				
+				this.setStereo = function() {
+					
+					this.leftOsc.disconnect();
+					this.rightOsc.disconnect();
+					this.monoGain.disconnect();
+					
+					this.leftOsc.connect(this.leftGain);
+					this.rightOsc.connect(this.rightGain);
+
+					this.leftGain.connect(this.mixer,0,0);
+					this.rightGain.connect(this.mixer,0,1);
+					
+					this.mixer.connect(this.context.destination);
+				}	
+				
+				this.setVar = function(whichVar,value) {
+				
+					switch(whichVar) {
+						case 'lfv': this.lfvar = value; break;
+						case 'lmv': this.lmvar = value; break;
+						case 'rfv': this.rfvar = value; break;
+						case 'rmv': this.rmvar = value; break;
+						case 'balancevar': this.balancevar = value; this.dynamicbalance=true; break;
+						case 'nobalance': this.dynamicbalance = false;
+						this.leftGain.gain.value = this.maxGain * 0.5;
+						this.rightGain.gain.value = this.maxGain * 0.5;
+						break;
+					}	
+					
+					this.setScales();
+					
+				}	
+				
+				this.leftFreqRange = 1000;
+				this.leftModRange = 50;
+
+				this.rightFreqRange = 1000;
+				this.rightModRange = 50;
+
+				
+				this.context = new webkitAudioContext();
+				this.context.destination.channelCount = 2;
+			
+				this.context.destination.channelCountMode = "explicit";
+				this.context.destination.channelInterpretation = "discrete";
+								
+				this.mixer = this.context.createChannelMerger(2);
+				
+				this.leftOsc = this.context.createOscillator();
+				this.leftGain = this.context.createGainNode();
+				this.leftModOsc = this.context.createOscillator();
+				this.leftModGain = this.context.createGainNode();
+
+				this.monoGain = this.context.createGainNode();
+
+				this.rightOsc = this.context.createOscillator();
+				this.rightGain = this.context.createGainNode();
+				this.rightModOsc = this.context.createOscillator();
+				this.rightModGain = this.context.createGainNode();
+
+				this.dt = 0.01;
+				
+				this.maxGain = 2.0;
+				
+				this.leftModGain.gain.value = 20.0;
+				this.leftOsc.type = 0;
+				this.leftOsc.frequency.value = 1000;
+									
+				this.rightModGain.gain.value = 20.0;
+				this.rightOsc.type = 0;
+				this.rightOsc.frequency.value = 1000;									
+							
+				this.leftGain.gain.value = this.maxGain;			
+				this.rightGain.gain.value = this.maxGain;					
+				this.monoGain.gain.value = this.maxGain;			
+						
+				this.leftModOsc.connect(this.leftModGain);
+				this.leftModGain.connect(this.leftOsc.frequency);
+
+				this.rightModOsc.connect(this.rightModGain);
+				this.rightModGain.connect(this.rightOsc.frequency);
+
+
+				this.leftOsc.connect(this.leftGain);
+				this.rightOsc.connect(this.rightGain);
+
+				this.leftGain.connect(this.mixer,0,0);
+				this.rightGain.connect(this.mixer,0,1);
+
+				this.leftOsc.noteOn(1);
+				this.leftModOsc.noteOn(1);
+			
+				this.rightOsc.noteOn(1);
+				this.rightModOsc.noteOn(1);			
+
+
+			
+
+				//this.leftOsc.connect(this.context.destination);
+
+				this.mixer.connect(this.context.destination);
+
+
+
+
+				
+				this.attractor = attract;
+								
+				this.svg = $('#'+target)[0];
+				this.width = this.svg.getAttribute("width");
+				this.height = this.svg.getAttribute("height");
+				
+				
+				
+				this.xvar = 'x';
+				this.yvar = 'z';
+				this.xscale = 1.0;
+				this.yscale = 1.0;
+				
+				this.setPlane('x','z');
+				
+				this.lfvar = 'y';
+				this.lmvar = 'z';
+				
+				this.rfvar = 'z';
+				this.rmvar = 'y';				
+				
+				this.balancevar = 'x';
+				this.dynamicbalance = true;
+				
+				
+				this.setScales();
+				
+				
+				this.initPoints();
+				
+				this.pline = document.createElementNS("http://www.w3.org/2000/svg","polyline");
+				this.pline.setAttribute("stroke","#00FF88");
+				this.pline.setAttribute("stroke-width","2");
+				this.pline.setAttribute("fill","none");
+				
+				this.pline.setAttribute("points",this.points);
+				
+				this.svg.appendChild(this.pline);
+				
+			
+
+				
+			}	
+
+		$(document).ready(function() {
+			
+			
+			attractor = new lorentz(10.0,28.0,8/3.0);
+			
+			ltrace = new trace('scope',attractor);
+				
+			$("button").button();
+			$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
+			$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
+			
+			$("#volSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setVol(); } });
+			$('#channelSelect').buttonset();
+			$('#lc').click(function() {ltrace.setLeftChannel();});
+			$('#rc').click(function() {ltrace.setRightChannel();});
+			$('#sc').click(function() {ltrace.setStereo();});
+			
+			$('#balanceVar').buttonset();
+			$("#0b").click(function() {ltrace.setVar('nobalance','null');});
+			$("#xb").click(function() {ltrace.setVar('balancevar','x');});
+			$("#yb").click(function() {ltrace.setVar('balancevar','y');});
+			$("#zb").click(function() {ltrace.setVar('balancevar','z');});
+
+			
+			$("#leftFreqRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setLeftFreqRange(); }});
+			$("#leftModRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setLeftModRange(); } });
+			
+			$("#leftFreqVar").buttonset();
+			
+			$("#lfx").click(function() {ltrace.setVar('lfv','x');});
+			$("#lfy").click(function() {ltrace.setVar('lfv','y');});
+			$("#lfz").click(function() {ltrace.setVar('lfv','z');});
+			
+			$("#leftModVar").buttonset();
+
+			$("#lmx").click(function() {ltrace.setVar('lmv','x');});
+			$("#lmy").click(function() {ltrace.setVar('lmv','y');});
+			$("#lmz").click(function() {ltrace.setVar('lmv','z');});			
+			
+			$("#rightFreqRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setRightFreqRange(); }});
+			$("#rightModRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setRightModRange(); } });
+			
+			$("#rightFreqVar").buttonset();
+		
+			$("#rfx").click(function() {ltrace.setVar('rfv','x');});
+			$("#rfy").click(function() {ltrace.setVar('rfv','y');});
+			$("#rfz").click(function() {ltrace.setVar('rfv','z');});		
+		
+			$("#rightModVar").buttonset();
+
+			$("#rmx").click(function() {ltrace.setVar('rmv','x');});
+			$("#rmy").click(function() {ltrace.setVar('rmv','y');});
+			$("#rmz").click(function() {ltrace.setVar('rmv','z');});
+			
+			ltrace.setSpeed();
+			ltrace.setChaos();
+			
+			ltrace.setVol();
+	
+			ltrace.setLeftFreqRange();
+			ltrace.setLeftModRange();
+			
+			ltrace.setRightFreqRange();
+			ltrace.setRightModRange();
+			
+			
+			window.setInterval(function(){ltrace.tick()},10);
+		
+		});	
+				
+		</script>
+		
+		<title>Dr Greenway's Chaoscillator. File under "Math Rock"</title>
+		
+	</head>
+
+	<body>
+		<div style="width:600px">
+			<div>
+				<svg xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					id="scope" 
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink" 
+					width="600" height="400">
+			
+					<rect x="0" y="0" rx="30" ry="30" width="600" height="400" style="fill:black;stroke:black;stroke-width:5;"/>
+				</svg>
+			</div>
+		
+			<div style="height:5px"></div>
+		
+			<div style="position:relative; border-style:outset; border-width:10px; ">
+				<div>
+					<button onClick="ltrace.newPlane('x','y')">x-y</button>
+					<button onClick="ltrace.newPlane('x','z')">x-y</button>
+					<button onClick="ltrace.newPlane('y','z')">y-z</button>
+				</div>
+				<div id="chaosSlide" style="position:absolute; right:0; bottom:0; width:350px; text-align:center;">
+					<span style="vertical-align:middle; font-size:small;">chaos</span>
+				</div>
+				<div id="timeSlide" style="position:absolute; right:0; top:0; width:350px; text-align:center;">
+					<span style="vertical-align:middle; font-size:small;">speed</span>
+				</div>
+			</div>
+
+			<!-- <div style="height:5px"></div> -->
+
+			<div style="position:relative;">
+							
+				<div style="position:absolute; width:580px; top:0px; height:30px; border-style:outset; border-width:10px;">
+					<div id="volSlide" style="position:absolute; left:5; top:8; width:240px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">vol</span>
+					</div>
+				</div>
+
+					<div id="channelSelect" style="position:absolute; right:160; top:10;">
+						<input type="radio" id="both" name="channel" checked="checked"><label id='sc' style="font-size:small;" for="both">stereo</label>
+						<input type="radio" id="leftonly" name="channel"><label id='lc' style="font-size:small;" for="leftonly">left</label>
+						<input type="radio" id="rightonly" name="channel"><label id='rc' style="font-size:small;" for="rightonly">right</label>
+					</div>
+
+
+					<div id="balanceVar" style="position:absolute; right:10; top:10;">
+						<input type="radio" id="none" name="balance" ><label id='0b' style="font-size:small;" for="none">0</label>
+						<input type="radio" id="xbalance" name="balance" checked="checked" ><label id='xb' style="font-size:small;" for="xbalance">x</label>
+						<input type="radio" id="ybalance" name="balance"><label id='yb' style="font-size:small;" for="ybalance">y</label>
+						<input type="radio" id="zbalance" name="balance"><label id='zb' style="font-size:small;" for="zbalance">z</label>
+					</div>
+
+							
+				<div style="position:absolute; width:280px; top:50px; height:30px; border-style:outset; border-width:10px;">
+					<div id="leftFreqRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">L freq</span>
+					</div>
+					
+					<div id="leftFreqVar" style="position:absolute; right:0;">
+						<input type="radio" id="leftfx" name="leftf"><label id='lfx' style="font-size:small;" for="leftfx">x</label>
+						<input type="radio" id="leftfy" name="leftf" checked="checked"><label id='lfy' style="font-size:small;" for="leftfy">y</label>
+						<input type="radio" id="leftfz" name="leftf"><label id='lfz' style="font-size:small;" for="leftfz">z</label>
+					</div>
+				</div>
+			
+				
+				<div style="position:absolute; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">	
+					<div id="leftModRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">L mod</span>
+					</div>
+
+					<div id="leftModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="leftmx" name="leftm"><label id='lmx' style="font-size:small;" for="leftmx">x</label>
+						<input type="radio" id="leftmy" name="leftm"><label id='lmy' style="font-size:small;" for="leftmy">y</label>
+						<input type="radio" id="leftmz" name="leftm" checked="checked"><label id='lmz' style="font-size:small;" for="leftmz">z</label>
+					</div>					
+							
+				</div>
+				
+				<div style="position:absolute; left: 300px; top:50px; width:280px; height:30px; border-style:outset; border-width:10px;">
+					<div id="rightFreqRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">R freq</span>
+					</div>
+				
+					<div id="rightFreqVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="rightfx" name="rightf"><label id='rfx' style="font-size:small;" for="rightfx">x</label>
+						<input type="radio" id="rightfy" name="rightf"><label id='rfy' style="font-size:small;" for="rightfy">y</label>
+						<input type="radio" id="rightfz" name="rightf" checked="checked"><label id='rfz' style="font-size:small;" for="rightfz">z</label>
+					</div>
+					
+				</div>
+				
+
+				<div style="position:absolute; left: 300px; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">
+					<div id="rightModRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">R mod</span>
+					</div>
+				
+					<div id="rightModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="rightmx" name="rightm"><label id='rmx' style="font-size:small;" for="rightmx">x</label>
+						<input type="radio" id="rightmy" name="rightm" checked="checked"><label id='rmy' style="font-size:small;" for="rightmy">y</label>
+						<input type="radio" id="rightmz" name="rightm" ><label id='rmz' style="font-size:small;" for="rightmz">z</label>
+					</div>
+					
+				</div>
+				
+				
+				
+				
+			<div>
+
+		</div>
+	</body>
+
+</html>
