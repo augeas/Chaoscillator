@@ -177,16 +177,14 @@
 					}
 				}	
 			
-				initPoints = function() {
+				this.initPoints = function() {
 					this.points = this.getPoint();
 				
 					for (var i=0;i<1024;i++) {
 						this.points += " "+this.getPoint();
 					}						
 				}	
-			
-				this.initPoints = initPoints;
-			
+						
 				this.newPlane = function(x,y) {
 				
 					this.setPlane(x,y);
@@ -310,6 +308,30 @@
 					
 				}	
 
+				this.init = function() {
+		
+					this.setSpeed();
+					this.setChaos();
+			
+					this.setVol();
+	
+					this.setLeftFreqRange();
+					this.setLeftModRange();
+			
+					this.setRightFreqRange();
+					this.setRightModRange();
+				}
+
+				this.setAttractor = function(attract) {
+					this.attractor = attract;
+					var xp = this.xvar;
+					var yp = this.yvar;
+					this.setPlane(xp,yp);
+					this.setScales();
+					//this.initPoints();
+				}	
+				
+
 				this.leftModulation = true;
 				this.rightModulation = true;
 				
@@ -377,25 +399,14 @@
 				this.rightOsc.noteOn(1);
 				this.rightModOsc.noteOn(1);			
 
-
-			
-
-				//this.leftOsc.connect(this.context.destination);
-
 				this.mixer.connect(this.context.destination);
 
-
-
-
-				
 				this.attractor = attract;
 								
 				this.svg = $('#'+target)[0];
 				this.width = this.svg.getAttribute("width");
 				this.height = this.svg.getAttribute("height");
-				
-				
-				
+								
 				this.xvar = 'x';
 				this.yvar = 'z';
 				this.xscale = 1.0;
@@ -435,14 +446,17 @@
 		$(document).ready(function() {
 			
 			
-			//attractor = new lorentz(10.0,28.0,8/3.0);
 			
 			//attractor = new rossler(0.1,0.1,14.0);
 			
-			attractor = new chua(15.6,25.0);
+			//attractor = new chua(15.6,25.0);
 			
-			ltrace = new trace('scope',attractor);
-				
+			ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0));
+			
+			$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0)); ltrace.init();});
+			$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0)); ltrace.init();});
+			$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0)); ltrace.init();});
+			
 			$("button").button();
 			$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
 			$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
@@ -452,6 +466,9 @@
 			$('#lc').click(function() {ltrace.setLeftChannel();});
 			$('#rc').click(function() {ltrace.setRightChannel();});
 			$('#sc').click(function() {ltrace.setStereo();});
+			
+			$('#oscSelect').buttonset();
+			$('#planeSelect').buttonset();
 			
 			$('#balanceVar').buttonset();
 			$("#0b").click(function() {ltrace.setVar('nobalance','null');});
@@ -492,18 +509,8 @@
 			$("#rmy").click(function() {ltrace.setVar('rmv','y');});
 			$("#rmz").click(function() {ltrace.setVar('rmv','z');});
 			
-			ltrace.setSpeed();
-			ltrace.setChaos();
-			
-			ltrace.setVol();
-	
-			ltrace.setLeftFreqRange();
-			ltrace.setLeftModRange();
-			
-			ltrace.setRightFreqRange();
-			ltrace.setRightModRange();
-			
-			
+			ltrace.init();
+						
 			window.setInterval(function(){ltrace.tick()},10);
 		
 		});	
@@ -528,20 +535,31 @@
 				</svg>
 			</div>
 		
-			<div style="height:5px"></div>
-		
-			<div style="position:relative; border-style:outset; border-width:10px; ">
-				<div>
-					<button onClick="ltrace.newPlane('x','y')">x-y</button>
-					<button onClick="ltrace.newPlane('x','z')">x-z</button>
-					<button onClick="ltrace.newPlane('y','z')">y-z</button>
-				</div>
-				<div id="chaosSlide" style="position:absolute; right:0; bottom:0; width:350px; text-align:center;">
-					<span style="vertical-align:middle; font-size:small;">chaos</span>
-				</div>
-				<div id="timeSlide" style="position:absolute; right:0; top:0; width:350px; text-align:center;">
+			<div style="position:relative; height:30px; border-style:outset; border-width:10px; ">
+				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:270px; text-align:center;">
 					<span style="vertical-align:middle; font-size:small;">speed</span>
 				</div>
+			
+				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:270px; text-align:center;">
+					<span style="vertical-align:middle; font-size:small;">chaos</span>
+				</div>
+
+			</div>
+
+			<div style="position:relative; border-style:outset; border-width:10px; height:30px;">
+
+				<div id="oscSelect" style="position:absolute; left:0px; top:0px;">
+					<input type="radio" id="lorrentz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorrentz">Lorrentz</label>
+					<input type="radio" id="chua" name="oscType"><label id='cosc' style="font-size:small;" for="chua">Chua</label>
+					<input type="radio" id="rossler" name="oscType"><label id='rosc' style="font-size:small;" for="rossler">Rossler</label>
+				</div>
+				
+				<div id="planeSelect" style="position:absolute; right:0px; top:0px;">
+					<input type="radio" id="xyplane" name="plane"><label style="font-size:small;" for="xyplane" onClick="ltrace.newPlane('x','y')">x-y</label>
+					<input type="radio" id="xzplane" name="plane" checked="checked"><label style="font-size:small;" for="xzplane" onClick="ltrace.newPlane('x','z')">x-z</label>
+					<input type="radio" id="yzplane" name="plane"><label style="font-size:small;" for="yzplane" onClick="ltrace.newPlane('y','z')">y-z</label>
+				</div>
+
 			</div>
 
 			<!-- <div style="height:5px"></div> -->
