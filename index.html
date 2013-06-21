@@ -325,9 +325,11 @@
 				this.setAttractor = function(attract) {
 					this.attractor = attract;
 					this.setScales();
-					//this.initPoints();
 					var xp = this.xvar;
 					var yp = this.yvar;
+					
+					this.init();
+					
 					this.newPlane(xp,yp);
 				}	
 				
@@ -453,9 +455,9 @@
 			
 			ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0));
 			
-			$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0)); ltrace.init();});
-			$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0)); ltrace.init();});
-			$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0)); ltrace.init();});
+			$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
+			$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0));});
+			$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
 			
 			$("button").button();
 			$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
