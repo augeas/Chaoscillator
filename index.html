@@ -324,11 +324,11 @@
 
 				this.setAttractor = function(attract) {
 					this.attractor = attract;
-					var xp = this.xvar;
-					var yp = this.yvar;
-					this.setPlane(xp,yp);
 					this.setScales();
 					//this.initPoints();
+					var xp = this.xvar;
+					var yp = this.yvar;
+					this.newPlane(xp,yp);
 				}	
 				
 
