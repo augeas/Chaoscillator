@@ -178,10 +178,10 @@
 				}	
 			
 				this.initPoints = function() {
-					this.points = this.getPoint();
-				
+					var firstPoint = this.getPoint();
+					this.points = firstPoint;
 					for (var i=0;i<1024;i++) {
-						this.points += " "+this.getPoint();
+						this.points += " "+firstPoint;
 					}						
 				}	
 						
@@ -425,10 +425,7 @@
 				this.balancevar = 'x';
 				this.dynamicbalance = true;
 				
-				
 				this.setScales();
-				
-				
 				this.initPoints();
 				
 				this.pline = document.createElementNS("http://www.w3.org/2000/svg","polyline");
@@ -440,19 +437,10 @@
 				
 				this.svg.appendChild(this.pline);
 				
-			
-
-				
 			}	
 
 		$(document).ready(function() {
-			
-			
-			
-			//attractor = new rossler(0.1,0.1,14.0);
-			
-			//attractor = new chua(15.6,25.0);
-			
+						
 			ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0));
 			
 			$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
