@@ -82,11 +82,26 @@
 
 			}
 
-
-
-
-
-
+			function fabrab(alpha,gamma) {
+				this.alpha = alpha;
+				this.gamma = gamma;
+				
+				this.x = 0.1;
+				this.y = 0.1;
+				this.z = 0.1;
+				this.dtmax = 0.08;
+				
+				this.ranges = { 'x':{'min':-2.0, 'max':2.0}, 'y':{'min':-3.0, 'max':3.0}, 'z':{'min':-0.1, 'max':2.0} };
+			
+				this.set = function(x,y,z) { this.x = x; this.y = y; this.z = z; }
+				
+				this.dx = function(x) {return this.y*(this.z - 1 + x*x) + this.gamma*x;}
+				this.dy = function(y) {return this.x*(3*this.z + 1 -this.x*this.x) + this.gamma*y}
+				this.dz = function(z) {return -2*z*(this.alpha + this.x*this.y);}
+				
+				this.chaos = function(perc) {this.alpha = 0.14 + (perc*1.1) / 100.0; }
+				
+			}
 			
 			function rk4(attract,dt) {
 				
@@ -110,7 +125,7 @@
 				return attract;
 			}	
 			
-			function trace(target,attract) {
+			function trace(target,attract,context) {
 				
 				this.setPlane = function(xplane,yplane) {
 					this.xvar = xplane;
@@ -159,7 +174,7 @@
 				
 				}	
 				
-				this.tick = function() {
+				this.audioTick = function() {
 				
 					this.points = this.points.replace(/[\d]+\s[\d]+\s/,"");
 					this.points += " "+this.getPoint();
@@ -176,6 +191,12 @@
 						this.rightGain.gain.value = this.maxGain * (this.attractor[this.balancevar] - this.balmin)/this.balnorm;
 					}
 				}	
+			
+				this.quietTick = function() {
+					this.points = this.points.replace(/[\d]+\s[\d]+\s/,"");
+					this.points += " "+this.getPoint();
+					this.pline.setAttribute("points",this.points);
+				}
 			
 				this.initPoints = function() {
 					var firstPoint = this.getPoint();
@@ -313,18 +334,20 @@
 					this.setSpeed();
 					this.setChaos();
 			
-					this.setVol();
+					if (this.context) {
+						this.setVol();
 	
-					this.setLeftFreqRange();
-					this.setLeftModRange();
+						this.setLeftFreqRange();
+						this.setLeftModRange();
 			
-					this.setRightFreqRange();
-					this.setRightModRange();
+						this.setRightFreqRange();
+						this.setRightModRange();
+					}
 				}
 
 				this.setAttractor = function(attract) {
 					this.attractor = attract;
-					this.setScales();
+										
 					var xp = this.xvar;
 					var yp = this.yvar;
 					
@@ -333,75 +356,9 @@
 					this.newPlane(xp,yp);
 				}	
 				
-
-				this.leftModulation = true;
-				this.rightModulation = true;
-				
-				this.leftFreqRange = 1000;
-				this.leftModRange = 50;
-
-				this.rightFreqRange = 1000;
-				this.rightModRange = 50;
-
-				
-				this.context = new webkitAudioContext();
-				this.context.destination.channelCount = 2;
-			
-				this.context.destination.channelCountMode = "explicit";
-				this.context.destination.channelInterpretation = "discrete";
-								
-				this.mixer = this.context.createChannelMerger(2);
-				
-				this.leftOsc = this.context.createOscillator();
-				this.leftGain = this.context.createGainNode();
-				this.leftModOsc = this.context.createOscillator();
-				this.leftModGain = this.context.createGainNode();
-
-				this.monoGain = this.context.createGainNode();
-
-				this.rightOsc = this.context.createOscillator();
-				this.rightGain = this.context.createGainNode();
-				this.rightModOsc = this.context.createOscillator();
-				this.rightModGain = this.context.createGainNode();
-
 				this.dt = 0.01;
-				
-				this.maxGain = 2.0;
-				
 
-				
-				this.leftModGain.gain.value = 20.0;
-				this.leftOsc.type = 0;
-				this.leftOsc.frequency.value = 1000;
-									
-				this.rightModGain.gain.value = 20.0;
-				this.rightOsc.type = 0;
-				this.rightOsc.frequency.value = 1000;									
-							
-				this.leftGain.gain.value = this.maxGain;			
-				this.rightGain.gain.value = this.maxGain;					
-				this.monoGain.gain.value = this.maxGain;			
-						
-				this.leftModOsc.connect(this.leftModGain);
-				this.leftModGain.connect(this.leftOsc.frequency);
-
-				this.rightModOsc.connect(this.rightModGain);
-				this.rightModGain.connect(this.rightOsc.frequency);
-
-
-				this.leftOsc.connect(this.leftGain);
-				this.rightOsc.connect(this.rightGain);
-
-				this.leftGain.connect(this.mixer,0,0);
-				this.rightGain.connect(this.mixer,0,1);
-
-				this.leftOsc.noteOn(1);
-				this.leftModOsc.noteOn(1);
-			
-				this.rightOsc.noteOn(1);
-				this.rightModOsc.noteOn(1);			
-
-				this.mixer.connect(this.context.destination);
+				this.context = context;
 
 				this.attractor = attract;
 								
@@ -415,17 +372,7 @@
 				this.yscale = 1.0;
 				
 				this.setPlane('x','z');
-				
-				this.lfvar = 'y';
-				this.lmvar = 'z';
-				
-				this.rfvar = 'z';
-				this.rmvar = 'y';				
-				
-				this.balancevar = 'x';
-				this.dynamicbalance = true;
-				
-				this.setScales();
+					
 				this.initPoints();
 				
 				this.pline = document.createElementNS("http://www.w3.org/2000/svg","polyline");
@@ -436,68 +383,175 @@
 				this.pline.setAttribute("points",this.points);
 				
 				this.svg.appendChild(this.pline);
+
+
+				if (this.context) {
+					this.tick = this.audioTick;
+					
+					this.leftModulation = true;
+					this.rightModulation = true;
 				
+					this.leftFreqRange = 1000;
+					this.leftModRange = 50;
+
+					this.rightFreqRange = 1000;
+					this.rightModRange = 50;
+
+					this.context.destination.channelCount = 2;
+			
+					this.context.destination.channelCountMode = "explicit";
+					this.context.destination.channelInterpretation = "discrete";
+								
+					this.mixer = this.context.createChannelMerger(2);
+				
+					this.leftOsc = this.context.createOscillator();
+					this.leftGain = this.context.createGainNode();
+					this.leftModOsc = this.context.createOscillator();
+					this.leftModGain = this.context.createGainNode();
+
+					this.monoGain = this.context.createGainNode();
+
+					this.rightOsc = this.context.createOscillator();
+					this.rightGain = this.context.createGainNode();
+					this.rightModOsc = this.context.createOscillator();
+					this.rightModGain = this.context.createGainNode();
+
+					this.maxGain = 2.0;
+								
+					this.leftModGain.gain.value = 20.0;
+					this.leftOsc.type = 0;
+					this.leftOsc.frequency.value = 1000;
+									
+					this.rightModGain.gain.value = 20.0;
+					this.rightOsc.type = 0;
+					this.rightOsc.frequency.value = 1000;									
+							
+					this.leftGain.gain.value = this.maxGain;			
+					this.rightGain.gain.value = this.maxGain;					
+					this.monoGain.gain.value = this.maxGain;			
+						
+					this.leftModOsc.connect(this.leftModGain);
+					this.leftModGain.connect(this.leftOsc.frequency);
+
+					this.rightModOsc.connect(this.rightModGain);
+					this.rightModGain.connect(this.rightOsc.frequency);
+
+					this.leftOsc.connect(this.leftGain);
+					this.rightOsc.connect(this.rightGain);
+
+					this.leftGain.connect(this.mixer,0,0);
+					this.rightGain.connect(this.mixer,0,1);
+
+					this.leftOsc.noteOn(1);
+					this.leftModOsc.noteOn(1);
+			
+					this.rightOsc.noteOn(1);
+					this.rightModOsc.noteOn(1);			
+
+					this.mixer.connect(this.context.destination);
+
+					this.lfvar = 'y';
+					this.lmvar = 'z';
+				
+					this.rfvar = 'z';
+					this.rmvar = 'y';				
+				
+					this.balancevar = 'x';
+					this.dynamicbalance = true;
+
+					this.setScales();
+
+				}
+				else {
+					this.tick = this.quietTick;
+				}	
+								
 			}	
 
 		$(document).ready(function() {
-						
-			ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0));
+					
+			var gotAudio = true;	
 			
+			if (typeof AudioContext !== "undefined") {
+				context = new AudioContext();
+			} else if (typeof webkitAudioContext !== "undefined") {
+				context = new webkitAudioContext();
+			} else {
+				gotAudio = false;
+			}
+			
+			//var context = new webkitAudioContext();		
+
+			if (gotAudio)
+			{
+				ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),context);
+			}
+			else {
+				ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),false);
+			}
+			
+			$('#oscSelect').buttonset();
+			$('#planeSelect').buttonset();
+						
 			$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
 			$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0));});
 			$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
+			$("#fara").click(function() {ltrace.setAttractor(new fabrab(0.98,0.1));});
 			
 			$("button").button();
 			$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
 			$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
+
+			if (gotAudio) {
 			
-			$("#volSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setVol(); } });
-			$('#channelSelect').buttonset();
-			$('#lc').click(function() {ltrace.setLeftChannel();});
-			$('#rc').click(function() {ltrace.setRightChannel();});
-			$('#sc').click(function() {ltrace.setStereo();});
+				$("#volSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setVol(); } });
+				$('#channelSelect').buttonset();
+				$('#lc').click(function() {ltrace.setLeftChannel();});
+				$('#rc').click(function() {ltrace.setRightChannel();});
+				$('#sc').click(function() {ltrace.setStereo();});
 			
-			$('#oscSelect').buttonset();
-			$('#planeSelect').buttonset();
-			
-			$('#balanceVar').buttonset();
-			$("#0b").click(function() {ltrace.setVar('nobalance','null');});
-			$("#xb").click(function() {ltrace.setVar('balancevar','x');});
-			$("#yb").click(function() {ltrace.setVar('balancevar','y');});
-			$("#zb").click(function() {ltrace.setVar('balancevar','z');});
+				$('#balanceVar').buttonset();
+				$("#0b").click(function() {ltrace.setVar('nobalance','null');});
+				$("#xb").click(function() {ltrace.setVar('balancevar','x');});
+				$("#yb").click(function() {ltrace.setVar('balancevar','y');});
+				$("#zb").click(function() {ltrace.setVar('balancevar','z');});
 
 			
-			$("#leftFreqRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setLeftFreqRange(); }});
-			$("#leftModRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setLeftModRange(); } });
+				$("#leftFreqRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setLeftFreqRange(); }});
+				$("#leftModRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setLeftModRange(); } });
 			
-			$("#leftFreqVar").buttonset();
+				$("#leftFreqVar").buttonset();
 			
-			$("#lfx").click(function() {ltrace.setVar('lfv','x');});
-			$("#lfy").click(function() {ltrace.setVar('lfv','y');});
-			$("#lfz").click(function() {ltrace.setVar('lfv','z');});
+				$("#lfx").click(function() {ltrace.setVar('lfv','x');});
+				$("#lfy").click(function() {ltrace.setVar('lfv','y');});
+				$("#lfz").click(function() {ltrace.setVar('lfv','z');});
 			
-			$("#leftModVar").buttonset();
+				$("#leftModVar").buttonset();
 
-			$("#lm0").click(function() {ltrace.stopLeftModulation();});
-			$("#lmx").click(function() {ltrace.setVar('lmv','x');});
-			$("#lmy").click(function() {ltrace.setVar('lmv','y');});
-			$("#lmz").click(function() {ltrace.setVar('lmv','z');});			
+				$("#lm0").click(function() {ltrace.stopLeftModulation();});
+				$("#lmx").click(function() {ltrace.setVar('lmv','x');});
+				$("#lmy").click(function() {ltrace.setVar('lmv','y');});
+				$("#lmz").click(function() {ltrace.setVar('lmv','z');});			
 			
-			$("#rightFreqRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setRightFreqRange(); }});
-			$("#rightModRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setRightModRange(); } });
+				$("#rightFreqRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setRightFreqRange(); }});
+				$("#rightModRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setRightModRange(); } });
 			
-			$("#rightFreqVar").buttonset();
+				$("#rightFreqVar").buttonset();
 		
-			$("#rfx").click(function() {ltrace.setVar('rfv','x');});
-			$("#rfy").click(function() {ltrace.setVar('rfv','y');});
-			$("#rfz").click(function() {ltrace.setVar('rfv','z');});		
+				$("#rfx").click(function() {ltrace.setVar('rfv','x');});
+				$("#rfy").click(function() {ltrace.setVar('rfv','y');});
+				$("#rfz").click(function() {ltrace.setVar('rfv','z');});		
 		
-			$("#rightModVar").buttonset();
+				$("#rightModVar").buttonset();
 
-			$("#rm0").click(function() {ltrace.stopRightModulation();});
-			$("#rmx").click(function() {ltrace.setVar('rmv','x');});
-			$("#rmy").click(function() {ltrace.setVar('rmv','y');});
-			$("#rmz").click(function() {ltrace.setVar('rmv','z');});
+				$("#rm0").click(function() {ltrace.stopRightModulation();});
+				$("#rmx").click(function() {ltrace.setVar('rmv','x');});
+				$("#rmy").click(function() {ltrace.setVar('rmv','y');});
+				$("#rmz").click(function() {ltrace.setVar('rmv','z');});
+				
+				$("#audioControls").show();
+				
+			}	
 			
 			ltrace.init();
 						
@@ -542,6 +596,7 @@
 					<input type="radio" id="lorrentz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorrentz">Lorrentz</label>
 					<input type="radio" id="chua" name="oscType"><label id='cosc' style="font-size:small;" for="chua">Chua</label>
 					<input type="radio" id="rossler" name="oscType"><label id='rosc' style="font-size:small;" for="rossler">Rossler</label>
+					<!-- <input type="radio" id="fabrab" name="oscType"><label id='fara' style="font-size:small;" for="fabrab">Rabinovich-Fabrikant</label> -->
 				</div>
 				
 				<div id="planeSelect" style="position:absolute; right:0px; top:0px;">
@@ -552,9 +607,8 @@
 
 			</div>
 
-			<!-- <div style="height:5px"></div> -->
 
-			<div style="position:relative;">
+			<div id="audioControls" style="position:relative; display:none">
 							
 				<div style="position:absolute; width:580px; top:0px; height:30px; border-style:outset; border-width:10px;">
 					<div id="volSlide" style="position:absolute; left:5; top:8; width:240px; text-align:center;">
@@ -631,10 +685,7 @@
 					</div>
 					
 				</div>
-				
-				
-				
-				
+					
 			<div>
 
 		</div>
