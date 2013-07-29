@@ -220,10 +220,10 @@
 										
 			var xp = this.xvar;
 			var yp = this.yvar;
-					
-			this.init();
-					
+
 			this.newPlane(xp,yp);
+			
+			this.setScales();
 		}	
 				
 		this.dt = 0.01;
