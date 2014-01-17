@@ -1,0 +1,318 @@
+<!DOCTYPE html PUBLIC> 
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		
+		<link rel="stylesheet" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
+		
+		<style>
+
+		</style>
+		
+		<script src="modernizr.custom.27349.js"></script>		
+		
+		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		</script>
+		
+		<script src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+		<script src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+		
+		<script src="attractors.js"></script>
+		<script src="trace.js"></script>
+		
+		<script>
+					
+			$(document).ready(function() {
+						
+				if (Modernizr.svg) {
+					$("#chaoscillator").show();
+				}	
+				
+				$("#tabs").tabs();
+				
+				var gotAudio = true;	
+			
+				if (typeof AudioContext !== "undefined") {
+					context = new AudioContext();
+				} else if (typeof webkitAudioContext !== "undefined") {
+					context = new webkitAudioContext();
+				} else {
+					gotAudio = false;
+				}
+			
+				if (gotAudio)
+				{
+					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),context);
+				}
+				else {
+					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),false);
+				}
+			
+				$('#oscSelect').buttonset();
+				$('#planeSelect').buttonset();
+						
+				$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
+				$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0));});
+				$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
+				$("#fara").click(function() {ltrace.setAttractor(new fabrab(0.98,0.1));});
+			
+				$("button").button();
+				$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
+				$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
+
+				if (gotAudio) {
+			
+					$("#volSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setVol(); } });
+					$('#channelSelect').buttonset();
+					$('#lc').click(function() {ltrace.setLeftChannel();});
+					$('#rc').click(function() {ltrace.setRightChannel();});
+					$('#sc').click(function() {ltrace.setStereo();});
+			
+					$('#balanceVar').buttonset();
+					$("#0b").click(function() {ltrace.setVar('nobalance','null');});
+					$("#xb").click(function() {ltrace.setVar('balancevar','x');});
+					$("#yb").click(function() {ltrace.setVar('balancevar','y');});
+					$("#zb").click(function() {ltrace.setVar('balancevar','z');});
+
+					$("#leftFreqRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setLeftFreqRange(); }});
+					$("#leftModRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setLeftModRange(); } });
+			
+					$("#leftFreqVar").buttonset();
+			
+					$("#lfx").click(function() {ltrace.setVar('lfv','x');});
+					$("#lfy").click(function() {ltrace.setVar('lfv','y');});
+					$("#lfz").click(function() {ltrace.setVar('lfv','z');});
+			
+					$("#leftModVar").buttonset();
+
+					$("#lm0").click(function() {ltrace.stopLeftModulation();});
+					$("#lmx").click(function() {ltrace.setVar('lmv','x');});
+					$("#lmy").click(function() {ltrace.setVar('lmv','y');});
+					$("#lmz").click(function() {ltrace.setVar('lmv','z');});			
+			
+					$("#rightFreqRangeSlide").slider({ min:0, max:100, value:75, change:function() {ltrace.setRightFreqRange(); }});
+					$("#rightModRangeSlide").slider({ min:0, max:100, value:25, change:function() {ltrace.setRightModRange(); } });
+			
+					$("#rightFreqVar").buttonset();
+		
+					$("#rfx").click(function() {ltrace.setVar('rfv','x');});
+					$("#rfy").click(function() {ltrace.setVar('rfv','y');});
+					$("#rfz").click(function() {ltrace.setVar('rfv','z');});		
+		
+					$("#rightModVar").buttonset();
+
+					$("#rm0").click(function() {ltrace.stopRightModulation();});
+					$("#rmx").click(function() {ltrace.setVar('rmv','x');});
+					$("#rmy").click(function() {ltrace.setVar('rmv','y');});
+					$("#rmz").click(function() {ltrace.setVar('rmv','z');});
+				
+					$("#audioControls").show();
+				
+				}	
+				else {
+					$("#audioFail").show();
+				}	
+			
+				ltrace.init();
+						
+				window.setInterval(function(){ltrace.tick()},10);
+		
+			});	
+				
+		</script>
+		
+		<title>Dr Greenway's Chaoscillator. File under "Math Rock"</title>
+		
+	</head>
+
+	<body>	
+		<div id="chaoscillator" style="top:10px; width:600px; display:none">
+			<div>
+				<svg xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					id="scope" 
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink" 
+					width="600" height="400">
+			
+					<rect x="0" y="0" rx="30" ry="30" width="600" height="400" style="fill:black;stroke:black;stroke-width:5;"/>
+				</svg>
+			</div>
+		
+			<div style="position:relative; height:30px; border-style:outset; border-width:10px; ">
+				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:270px; text-align:center;">
+					<span style="vertical-align:middle; font-size:small;">speed</span>
+				</div>
+			
+				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:270px; text-align:center;">
+					<span style="vertical-align:middle; font-size:small;">chaos</span>
+				</div>
+
+			</div>
+
+			<div style="position:relative; border-style:outset; border-width:10px; height:30px;">
+
+				<div id="oscSelect" style="position:absolute; left:0px; top:0px;">
+					<input type="radio" id="lorrentz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorrentz">Lorrentz</label>
+					<input type="radio" id="chua" name="oscType"><label id='cosc' style="font-size:small;" for="chua">Chua</label>
+					<input type="radio" id="rossler" name="oscType"><label id='rosc' style="font-size:small;" for="rossler">Rossler</label>
+					<!-- <input type="radio" id="fabrab" name="oscType"><label id='fara' style="font-size:small;" for="fabrab">Rabinovich-Fabrikant</label> -->
+				</div>
+				
+				<div id="planeSelect" style="position:absolute; right:0px; top:0px;">
+					<input type="radio" id="xyplane" name="plane"><label style="font-size:small;" for="xyplane" onClick="ltrace.newPlane('x','y')">x-y</label>
+					<input type="radio" id="xzplane" name="plane" checked="checked"><label style="font-size:small;" for="xzplane" onClick="ltrace.newPlane('x','z')">x-z</label>
+					<input type="radio" id="yzplane" name="plane"><label style="font-size:small;" for="yzplane" onClick="ltrace.newPlane('y','z')">y-z</label>
+				</div>
+
+			</div>
+
+			<div id="audioFail" style="position:relative; border-style:outset; border-width:10px; display:none">
+				<div class="ui-widget" style="color:#00FF88; background-color:000;">
+					<p  style="font-size:small;">You won't be able to hear anything, as your browser doesn't support the web audio API.</p>
+					<p  style="font-size:small;">Come back with one that does, like Chromium, Chrome or Safari, perhaps even Firefox 23.<p>
+					<p  style="font-size:small;">(Yes <a style="color:#00FF88" href="https://github.com/g200kg/WAAPISim">WAAPISim</a> has been tried, but it just didn't sound right.)</p>
+				</div>	
+			</div>
+		
+			<div id="audioControls" style="position:relative; display:none">
+							
+				<div style="position:absolute; width:580px; top:0px; height:30px; border-style:outset; border-width:10px;">
+					<div id="volSlide" style="position:absolute; left:5; top:8; width:240px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">vol</span>
+					</div>
+				</div>
+
+				<div id="channelSelect" style="position:absolute; right:160; top:10;">
+					<input type="radio" id="both" name="channel" checked="checked"><label id='sc' style="font-size:small;" for="both">stereo</label>
+					<input type="radio" id="leftonly" name="channel"><label id='lc' style="font-size:small;" for="leftonly">left</label>
+					<input type="radio" id="rightonly" name="channel"><label id='rc' style="font-size:small;" for="rightonly">right</label>
+				</div>
+
+
+				<div id="balanceVar" style="position:absolute; right:10; top:10;">
+					<input type="radio" id="none" name="balance" ><label id='0b' style="font-size:small;" for="none">0</label>
+					<input type="radio" id="xbalance" name="balance" checked="checked" ><label id='xb' style="font-size:small;" for="xbalance">x</label>
+					<input type="radio" id="ybalance" name="balance"><label id='yb' style="font-size:small;" for="ybalance">y</label>
+					<input type="radio" id="zbalance" name="balance"><label id='zb' style="font-size:small;" for="zbalance">z</label>
+				</div>
+
+							
+				<div style="position:absolute; width:280px; top:50px; height:30px; border-style:outset; border-width:10px;">
+					<div id="leftFreqRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">L freq</span>
+					</div>
+					
+					<div id="leftFreqVar" style="position:absolute; right:0;">
+						<input type="radio" id="leftfx" name="leftf"><label id='lfx' style="font-size:small;" for="leftfx">x</label>
+						<input type="radio" id="leftfy" name="leftf" checked="checked"><label id='lfy' style="font-size:small;" for="leftfy">y</label>
+						<input type="radio" id="leftfz" name="leftf"><label id='lfz' style="font-size:small;" for="leftfz">z</label>
+					</div>
+				</div>
+			
+				
+				<div style="position:absolute; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">	
+					<div id="leftModRangeSlide" style="position:absolute; left:5; top:8; width:120px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">L mod</span>
+					</div>
+
+					<div id="leftModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="leftm0" name="leftm"><label id='lm0' style="font-size:small;" for="leftm0">0</label>
+						<input type="radio" id="leftmx" name="leftm"><label id='lmx' style="font-size:small;" for="leftmx">x</label>
+						<input type="radio" id="leftmy" name="leftm"><label id='lmy' style="font-size:small;" for="leftmy">y</label>
+						<input type="radio" id="leftmz" name="leftm" checked="checked"><label id='lmz' style="font-size:small;" for="leftmz">z</label>
+					</div>					
+							
+				</div>
+				
+				<div style="position:absolute; left: 300px; top:50px; width:280px; height:30px; border-style:outset; border-width:10px;">
+					<div id="rightFreqRangeSlide" style="position:absolute; left:5; top:8; width:160px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">R freq</span>
+					</div>
+				
+					<div id="rightFreqVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="rightfx" name="rightf"><label id='rfx' style="font-size:small;" for="rightfx">x</label>
+						<input type="radio" id="rightfy" name="rightf"><label id='rfy' style="font-size:small;" for="rightfy">y</label>
+						<input type="radio" id="rightfz" name="rightf" checked="checked"><label id='rfz' style="font-size:small;" for="rightfz">z</label>
+					</div>
+					
+				</div>
+				
+				<div style="position:absolute; left: 300px; top:100px; width:280px; height:30px; border-style:outset; border-width:10px;">
+					<div id="rightModRangeSlide" style="position:absolute; left:5; top:8; width:120px; text-align:center;">
+						<span style="vertical-align:middle; font-size:small;">R mod</span>
+					</div>
+				
+					<div id="rightModVar" style="position:absolute; right:0; top:0;">
+						<input type="radio" id="rightm0" name="rightm"><label id='rm0' style="font-size:small;" for="rightm0">0</label>
+						<input type="radio" id="rightmx" name="rightm"><label id='rmx' style="font-size:small;" for="rightmx">x</label>
+						<input type="radio" id="rightmy" name="rightm" checked="checked"><label id='rmy' style="font-size:small;" for="rightmy">y</label>
+						<input type="radio" id="rightmz" name="rightm" ><label id='rmz' style="font-size:small;" for="rightmz">z</label>
+					</div>
+					
+				</div>
+					
+			</div>
+
+		</div>
+		
+		<div id="tabs" style="position:fixed; height:630px; left:620px; top:10px;">
+			<ul>
+				<li><a href="#tabs-1">About</a></li>
+				<li><a href="#tabs-2">Lorrentz</a></li>
+				<li><a href="#tabs-3">Chua</a></li>
+				<li><a href="#tabs-4">Rossler</a></li>
+			</ul>
+			<div id="tabs-1">
+				<p>The trace on the left is generated by a set of three chaotic differential equations that describe the x, y and z coordinates.
+				The three-dimensional attractor produced can be viewed in the <b>x-y</b>, <b>x-z</b>, and <b>z-y</b> planes.</p>
+				<p>The equations are solved by the <a href="http://apps.nrbook.com/empanel/index.html?pg=907">Fourth-Order Runge-Kutta method</a>.</p>
+				<p>A single parameter of each system is bound to the <b>chaos</b> slider, which changes the attractor's behaviour from stable to chaotic.</p>
+				<p>Two oscillators, one for the left audio channel and one for the right, have their frequencies controlled by one of the three variables
+				of the attractor. The variables are normalized and multiplied by a base frequency set by the <b>L freq</b> and <b>R freq</b> sliders.</p>
+				<p>The frequencies can also be modulated by a second pair of oscillators attached to another pair of variables. The base frequenices
+				of these oscillators are set by the <b>L mod</b> and <b>R mod</b> sliders. Disable modulation for a channel by setting its variable to
+				<b>0</b></p>
+				<p>The balance between the left and right channels can also be controlled by a variable. Select <b>0</b> to equalize the gain of both
+				channels. Alternatively, the left and right channels can be selected on their own.</p>
+			</div>
+			<div id="tabs-2">
+				<a href="http://en.wikipedia.org/wiki/Lorenz_system"><h3>Lorentz</h3></a>
+				<p>
+					<span>
+						$$\frac{dx}{dt} = \sigma(y-x), \frac{dy}{dt} = x(\rho-z)-y, \frac{dz}{dt} = xy - \beta z$$
+					</span>
+					Edward Lorentz described his simplified convection model in
+					"<a href="http://journals.ametsoc.org/doi/pdf/10.1175/1520-0469(1963)020%3C0130%3ADNF%3E2.0.CO%3B2"
+					>Deterministic Nonperiodic Flow</a>" in the Journal of the Atmospheric Sciences in 1963. The <b>chaos</b>
+					slider varies the value of \(\rho\) between 13 and 28. \( \sigma = 10, \beta = \frac{8}{3}.\)
+				</p>
+			</div>
+			<div id="tabs-3">
+				<p>
+					<a href="http://en.wikipedia.org/wiki/Chua's_circuit"><h3>Chua</h3></a>					
+					<span>
+						$$\frac{dx}{dt} = \alpha\left[y - x - f(x)\right], \frac{dy}{dt} = -x + y +z, \frac{dz}{dt} = -\beta y$$
+					</span>
+					<span>
+						$$f(x) = m_{1}x + \frac{1}{2}(m_{0}-m_{1})(\left|x+1\right|-\left|x-1\right|)$$
+					</span> 
+					Leon Chua devised his <a href="http://www.scholarpedia.org/article/Chua_circuit">chaotic circuit</a> in 1983, the function \(f(x)\) describes a special nonlinear resistor. The <b>chaos</b> slider varies the value of \(\beta\) between 25 and 50.
+					\( \alpha =15.6, m_{0}=-\frac{8}{7}, m_{1}=-\frac{5}{7}.\) 
+				</p>
+			</div>
+			<div id="tabs-4">
+				<p>
+					<a href="http://en.wikipedia.org/wiki/R%C3%B6ssler_attractor"><h3>Rossler</h3></a>
+					<span>
+						$$\frac{dx}{dt} = -y -z, \frac{dy}{dt} = x + ay, \frac{dz}{dt} = b + z(x-c)$$
+					</span>
+					Otto Rössler devised a set of simple differential equations to enable the study of chaotic dynamics
+					in "<a href="http://classes.soe.ucsc.edu/ams214/Winter09/foundingpapers/Rossler1976.pdf">An Equation For Continuous Chaos</a>" in Physics Letters in 1976. The <b>chaos</b> slider varies the value of \(c\) between 5.7 and 13. \( a = b = 0.1.\)
+				</p> 
+			</div>
+		</div>
+			
+	</body>
+c
+</html>
