@@ -1,3 +1,3 @@
 Lorentz and Rossler attractor noises, perpetrated with the web-audio API.
-Needs Webkit.
+Needs Webkit (Chromium, Safari, Chrome) for sound.
 
