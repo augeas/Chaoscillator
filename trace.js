@@ -311,11 +311,11 @@
 			this.leftGain.connect(this.mixer,0,0);
 			this.rightGain.connect(this.mixer,0,1);
 
-			this.leftOsc.noteOn(1);
-			this.leftModOsc.noteOn(1);
+			this.leftOsc.start(1);
+			this.leftModOsc.start(1);
 			
-			this.rightOsc.noteOn(1);
-			this.rightModOsc.noteOn(1);			
+			this.rightOsc.start(1);
+			this.rightModOsc.start(1);			
 
 			this.mixer.connect(this.context.destination);
 
