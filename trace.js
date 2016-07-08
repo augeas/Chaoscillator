@@ -274,16 +274,16 @@
 			this.mixer = this.context.createChannelMerger(2);
 				
 			this.leftOsc = this.context.createOscillator();
-			this.leftGain = this.context.createGainNode();
+			this.leftGain = this.context.createGain();
 			this.leftModOsc = this.context.createOscillator();
-			this.leftModGain = this.context.createGainNode();
+			this.leftModGain = this.context.createGain();
 
-			this.monoGain = this.context.createGainNode();
+			this.monoGain = this.context.createGain();
 
 			this.rightOsc = this.context.createOscillator();
-			this.rightGain = this.context.createGainNode();
+			this.rightGain = this.context.createGain();
 			this.rightModOsc = this.context.createOscillator();
-			this.rightModGain = this.context.createGainNode();
+			this.rightModGain = this.context.createGain();
 
 			this.maxGain = 2.0;
 								
