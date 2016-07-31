@@ -42,16 +42,16 @@
 			
 				if (gotAudio)
 				{
-					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),context);
+					ltrace = new trace('scope',new lorenz(10.0,28.0,8/3.0),context);
 				}
 				else {
-					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),false);
+					ltrace = new trace('scope',new lorenz(10.0,28.0,8/3.0),false);
 				}
 			
 				$('#oscSelect').buttonset();
 				$('#planeSelect').buttonset();
 						
-				$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
+				$("#losc").click(function() {ltrace.setAttractor(new lorenz(10.0,28.0,8/3.0));});
 				$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0));});
 				$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
 				$("#fara").click(function() {ltrace.setAttractor(new fabrab(0.98,0.1));});
@@ -153,7 +153,7 @@
 			<div style="position:relative; border-style:outset; border-width:10px; height:30px;">
 
 				<div id="oscSelect" style="position:absolute; left:0px; top:0px;">
-					<input type="radio" id="lorrentz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorrentz">Lorrentz</label>
+					<input type="radio" id="lorenz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorenz">Lorenz</label>
 					<input type="radio" id="chua" name="oscType"><label id='cosc' style="font-size:small;" for="chua">Chua</label>
 					<input type="radio" id="rossler" name="oscType"><label id='rosc' style="font-size:small;" for="rossler">Rossler</label>
 					<!-- <input type="radio" id="fabrab" name="oscType"><label id='fara' style="font-size:small;" for="fabrab">Rabinovich-Fabrikant</label> -->
@@ -259,7 +259,7 @@
 		<div id="tabs" style="position:fixed; height:630px; left:620px; top:10px;">
 			<ul>
 				<li><a href="#tabs-1">About</a></li>
-				<li><a href="#tabs-2">Lorrentz</a></li>
+				<li><a href="#tabs-2">Lorenz</a></li>
 				<li><a href="#tabs-3">Chua</a></li>
 				<li><a href="#tabs-4">Rossler</a></li>
 			</ul>
@@ -277,12 +277,12 @@
 				channels. Alternatively, the left and right channels can be selected on their own.</p>
 			</div>
 			<div id="tabs-2">
-				<a href="http://en.wikipedia.org/wiki/Lorenz_system"><h3>Lorentz</h3></a>
+				<a href="http://en.wikipedia.org/wiki/Lorenz_system"><h3>Lorenz</h3></a>
 				<p>
 					<span>
 						$$\frac{dx}{dt} = \sigma(y-x), \frac{dy}{dt} = x(\rho-z)-y, \frac{dz}{dt} = xy - \beta z$$
 					</span>
-					Edward Lorentz described his simplified convection model in
+					Edward Lorenz described his simplified convection model in
 					"<a href="http://journals.ametsoc.org/doi/pdf/10.1175/1520-0469(1963)020%3C0130%3ADNF%3E2.0.CO%3B2"
 					>Deterministic Nonperiodic Flow</a>" in the Journal of the Atmospheric Sciences in 1963. The <b>chaos</b>
 					slider varies the value of \(\rho\) between 13 and 28. \( \sigma = 10, \beta = \frac{8}{3}.\)
