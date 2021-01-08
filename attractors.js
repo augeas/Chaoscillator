@@ -1,5 +1,5 @@
 
-	function lorenz(sigma,rho,beta) {
+	function lorentz(sigma,rho,beta) {
 		this.sigma = sigma;
 		this.rho = rho;
 		this.beta = beta;
