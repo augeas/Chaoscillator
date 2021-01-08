@@ -3,25 +3,25 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 		
-		<link rel="stylesheet" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
+		<link rel="stylesheet" type="text/css" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
 		
 		<style>
 
 		</style>
 		
-		<script src="modernizr.custom.27349.js"></script>		
+		<script type="text/javascript" src="modernizr.custom.27349.js"></script>		
 		
 		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 		</script>
 		
-		<script src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
-		<script src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+		<script type="text/javascript" src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+		<script type="text/javascript" src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
 		
-		<script src="attractors.js"></script>
-		<script src="trace.js"></script>
+		<script type="text/javascript" src="attractors.js"></script>
+		<script type="text/javascript" src="trace.js"></script>
 		
 		<script>
-					
+							
 			$(document).ready(function() {
 						
 				if (Modernizr.svg) {
@@ -30,16 +30,35 @@
 				
 				$("#tabs").tabs();
 				
-				var gotAudio = true;	
-			
-				if (typeof AudioContext !== "undefined") {
+				var gotAudio = true;
+				var soundOn = false;
+                
+                var AudioContext = window.AudioContext || window.webkitAudioContext;
+                
+                if (typeof AudioContext !== "undefined") {
 					context = new AudioContext();
-				} else if (typeof webkitAudioContext !== "undefined") {
-					context = new webkitAudioContext();
+					context.suspend();
 				} else {
 					gotAudio = false;
 				}
-			
+
+                $('#soundButton').button();
+                
+                $('#soundButton').click(
+                    function() {
+                        if (soundOn) {
+                            soundOn = false;
+                            $('#soundButton').val('\uD83D\uDD08');
+                            context.suspend();
+                        }
+                        else {
+                            soundOn = true;
+                            $('#soundButton').val('\uD83D\uDD0A');
+                            context.resume();
+                        }
+                    }
+                );
+
 				if (gotAudio)
 				{
 					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),context);
@@ -56,7 +75,6 @@
 				$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
 				$("#fara").click(function() {ltrace.setAttractor(new fabrab(0.98,0.1));});
 			
-				$("button").button();
 				$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
 				$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
 
@@ -140,11 +158,14 @@
 			</div>
 		
 			<div style="position:relative; height:30px; border-style:outset; border-width:10px; ">
-				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:270px; text-align:center;">
+				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:250px; text-align:center;">
 					<span style="vertical-align:middle; font-size:small;">speed</span>
 				</div>
 			
-				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:270px; text-align:center;">
+                <input type="button" id="soundButton" value="&#x1F508;"
+                        style="display: block; margin: auto; font-size:small;">
+			
+				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:250px; text-align:center;">
 					<span style="vertical-align:middle; font-size:small;">chaos</span>
 				</div>
 
