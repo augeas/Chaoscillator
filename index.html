@@ -3,25 +3,25 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 		
-		<link rel="stylesheet" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
+		<link rel="stylesheet" type="text/css" href="jquery-ui-1.10.3.custom/css/trontastic/jquery-ui-1.10.3.custom.css">
 		
 		<style>
 
 		</style>
 		
-		<script src="modernizr.custom.27349.js"></script>		
+		<script type="text/javascript" src="modernizr.custom.27349.js"></script>		
 		
 		<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 		</script>
 		
-		<script src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
-		<script src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+		<script type="text/javascript" src="jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+		<script type="text/javascript" src="jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
 		
-		<script src="attractors.js"></script>
-		<script src="trace.js"></script>
+		<script type="text/javascript" src="attractors.js"></script>
+		<script type="text/javascript" src="trace.js"></script>
 		
 		<script>
-					
+							
 			$(document).ready(function() {
 						
 				if (Modernizr.svg) {
@@ -30,33 +30,51 @@
 				
 				$("#tabs").tabs();
 				
-				var gotAudio = true;	
-			
-				if (typeof AudioContext !== "undefined") {
+				var gotAudio = true;
+				var soundOn = false;
+                
+                var AudioContext = window.AudioContext || window.webkitAudioContext;
+                
+                if (typeof AudioContext !== "undefined") {
 					context = new AudioContext();
-				} else if (typeof webkitAudioContext !== "undefined") {
-					context = new webkitAudioContext();
+					context.suspend();
 				} else {
 					gotAudio = false;
 				}
-			
+
+                $('#soundButton').button();
+                
+                $('#soundButton').click(
+                    function() {
+                        if (soundOn) {
+                            soundOn = false;
+                            $('#soundButton').val('\uD83D\uDD08');
+                            context.suspend();
+                        }
+                        else {
+                            soundOn = true;
+                            $('#soundButton').val('\uD83D\uDD0A');
+                            context.resume();
+                        }
+                    }
+                );
+
 				if (gotAudio)
 				{
-					ltrace = new trace('scope',new lorenz(10.0,28.0,8/3.0),context);
+					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),context);
 				}
 				else {
-					ltrace = new trace('scope',new lorenz(10.0,28.0,8/3.0),false);
+					ltrace = new trace('scope',new lorentz(10.0,28.0,8/3.0),false);
 				}
 			
 				$('#oscSelect').buttonset();
 				$('#planeSelect').buttonset();
 						
-				$("#losc").click(function() {ltrace.setAttractor(new lorenz(10.0,28.0,8/3.0));});
+				$("#losc").click(function() {ltrace.setAttractor(new lorentz(10.0,28.0,8/3.0));});
 				$("#cosc").click(function() {ltrace.setAttractor(new chua(15.6,25.0));});
 				$("#rosc").click(function() {ltrace.setAttractor(new rossler(0.1,0.1,14.0));});
 				$("#fara").click(function() {ltrace.setAttractor(new fabrab(0.98,0.1));});
 			
-				$("button").button();
 				$("#chaosSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setChaos(); } });
 				$("#timeSlide").slider({ min:0, max:100, value:80, change:function() {ltrace.setSpeed(); } });
 
@@ -140,11 +158,14 @@
 			</div>
 		
 			<div style="position:relative; height:30px; border-style:outset; border-width:10px; ">
-				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:270px; text-align:center;">
+				<div id="timeSlide" style="position:absolute; left:5px; top:8px; width:250px; text-align:center;">
 					<span style="vertical-align:middle; font-size:small;">speed</span>
 				</div>
 			
-				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:270px; text-align:center;">
+                <input type="button" id="soundButton" value="&#x1F508;"
+                        style="display: block; margin: auto; font-size:small;">
+			
+				<div id="chaosSlide" style="position:absolute; right:5px; top:8px; width:250px; text-align:center;">
 					<span style="vertical-align:middle; font-size:small;">chaos</span>
 				</div>
 
@@ -153,7 +174,7 @@
 			<div style="position:relative; border-style:outset; border-width:10px; height:30px;">
 
 				<div id="oscSelect" style="position:absolute; left:0px; top:0px;">
-					<input type="radio" id="lorenz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorenz">Lorenz</label>
+					<input type="radio" id="lorrentz" name="oscType" checked="checked"><label id='losc' style="font-size:small;" for="lorrentz">Lorrentz</label>
 					<input type="radio" id="chua" name="oscType"><label id='cosc' style="font-size:small;" for="chua">Chua</label>
 					<input type="radio" id="rossler" name="oscType"><label id='rosc' style="font-size:small;" for="rossler">Rossler</label>
 					<!-- <input type="radio" id="fabrab" name="oscType"><label id='fara' style="font-size:small;" for="fabrab">Rabinovich-Fabrikant</label> -->
@@ -259,7 +280,7 @@
 		<div id="tabs" style="position:fixed; height:630px; left:620px; top:10px;">
 			<ul>
 				<li><a href="#tabs-1">About</a></li>
-				<li><a href="#tabs-2">Lorenz</a></li>
+				<li><a href="#tabs-2">Lorrentz</a></li>
 				<li><a href="#tabs-3">Chua</a></li>
 				<li><a href="#tabs-4">Rossler</a></li>
 			</ul>
@@ -277,12 +298,12 @@
 				channels. Alternatively, the left and right channels can be selected on their own.</p>
 			</div>
 			<div id="tabs-2">
-				<a href="http://en.wikipedia.org/wiki/Lorenz_system"><h3>Lorenz</h3></a>
+				<a href="http://en.wikipedia.org/wiki/Lorenz_system"><h3>Lorentz</h3></a>
 				<p>
 					<span>
 						$$\frac{dx}{dt} = \sigma(y-x), \frac{dy}{dt} = x(\rho-z)-y, \frac{dz}{dt} = xy - \beta z$$
 					</span>
-					Edward Lorenz described his simplified convection model in
+					Edward Lorentz described his simplified convection model in
 					"<a href="http://journals.ametsoc.org/doi/pdf/10.1175/1520-0469(1963)020%3C0130%3ADNF%3E2.0.CO%3B2"
 					>Deterministic Nonperiodic Flow</a>" in the Journal of the Atmospheric Sciences in 1963. The <b>chaos</b>
 					slider varies the value of \(\rho\) between 13 and 28. \( \sigma = 10, \beta = \frac{8}{3}.\)

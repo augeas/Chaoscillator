@@ -278,7 +278,7 @@
 			this.leftModOsc = this.context.createOscillator();
 			this.leftModGain = this.context.createGain();
 
-			this.monoGain = this.context.createGain();
+			this.monoGain = this.context.createGain ();
 
 			this.rightOsc = this.context.createOscillator();
 			this.rightGain = this.context.createGain();
@@ -311,11 +311,11 @@
 			this.leftGain.connect(this.mixer,0,0);
 			this.rightGain.connect(this.mixer,0,1);
 
-			this.leftOsc.start(1);
-			this.leftModOsc.start(1);
+			this.leftOsc.start();
+			this.leftModOsc.start();
 			
-			this.rightOsc.start(1);
-			this.rightModOsc.start(1);			
+			this.rightOsc.start();
+			this.rightModOsc.start();			
 
 			this.mixer.connect(this.context.destination);
 
